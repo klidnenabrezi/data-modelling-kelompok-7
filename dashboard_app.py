@@ -7,10 +7,10 @@ st.set_page_config(
     layout="wide"
 )
 
-# Load data
+
 df = pd.read_excel("raw/Book2.xlsx")
 
-# Clean columns
+
 df = df.drop(columns=[
     "Unnamed: 13",
     "Unnamed: 14",
@@ -18,7 +18,7 @@ df = df.drop(columns=[
     "StressLevel"
 ])
 
-# Feature engineering
+
 def usage_category(hours):
     if hours < 3:
         return "Low"
@@ -33,14 +33,14 @@ df["mental_strain_score"] = df[
     ["stress_level", "anxiety_level", "addiction_level"]
 ].mean(axis=1)
 
-# Title
+
 st.title("Teen Social Media and Wellbeing Dashboard")
 st.write(
     "This dashboard explores social media behavior, sleep, academic performance, "
     "and wellbeing indicators using descriptive analysis."
 )
 
-# KPI cards
+## KPI cards ##
 col1, col2, col3, col4, col5 = st.columns(5)
 
 col1.metric("Total Records", f"{len(df):,}")
@@ -51,7 +51,7 @@ col5.metric("Depression Indicator Rate", f"{df['depression_label'].mean() * 100:
 
 st.divider()
 
-# Summary tables
+## Summary ##
 usage_group_summary = df.groupby("social_media_usage_group").agg(
     records=("social_media_usage_group", "count"),
     avg_social_media_hours=("daily_social_media_hours", "mean"),
@@ -78,7 +78,7 @@ depression_summary = df.groupby("depression_label").agg(
     avg_mental_strain_score=("mental_strain_score", "mean")
 ).round(2).reset_index()
 
-# Section 1
+
 st.header("1. Social Media Profile")
 
 left, right = st.columns(2)
@@ -106,7 +106,6 @@ with right:
 
 st.divider()
 
-# Section 2
 st.header("2. Mental Strain Comparison")
 
 left, right = st.columns(2)
@@ -139,7 +138,7 @@ st.info(
 
 st.divider()
 
-# Section 3
+
 st.header("3. Depression Label Comparison")
 
 depression_long = depression_summary.melt(
@@ -194,7 +193,7 @@ st.warning(
 
 st.divider()
 
-# Section 4
+
 st.header("4. Correlation View")
 
 numeric_cols = [
