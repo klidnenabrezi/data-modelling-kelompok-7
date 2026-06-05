@@ -33,6 +33,47 @@ df["mental_strain_score"] = df[
     ["stress_level", "anxiety_level", "addiction_level"]
 ].mean(axis=1)
 
+# Sidebar filters
+st.sidebar.header("Dashboard Filters")
+
+age_range = st.sidebar.slider(
+    "Select Age Range",
+    int(df["age"].min()),
+    int(df["age"].max()),
+    (int(df["age"].min()), int(df["age"].max()))
+)
+
+selected_gender = st.sidebar.multiselect(
+    "Select Gender",
+    options=sorted(df["gender"].unique()),
+    default=sorted(df["gender"].unique())
+)
+
+selected_platform = st.sidebar.multiselect(
+    "Select Platform Usage",
+    options=sorted(df["platform_usage"].unique()),
+    default=sorted(df["platform_usage"].unique())
+)
+
+selected_usage_group = st.sidebar.multiselect(
+    "Select Social Media Usage Group",
+    options=["Low", "Moderate", "High"],
+    default=["Low", "Moderate", "High"]
+)
+
+selected_depression_label = st.sidebar.multiselect(
+    "Select Depression Label",
+    options=sorted(df["depression_label"].unique()),
+    default=sorted(df["depression_label"].unique())
+)
+
+filtered_df = df[
+    (df["age"].between(age_range[0], age_range[1])) &
+    (df["gender"].isin(selected_gender)) &
+    (df["platform_usage"].isin(selected_platform)) &
+    (df["social_media_usage_group"].isin(selected_usage_group)) &
+    (df["depression_label"].isin(selected_depression_label))
+]
 
 st.title("Teen Social Media and Wellbeing Dashboard")
 st.write(
@@ -43,16 +84,16 @@ st.write(
 ## KPI cards ##
 col1, col2, col3, col4, col5 = st.columns(5)
 
-col1.metric("Total Records", f"{len(df):,}")
-col2.metric("Avg Social Media Hours", f"{df['daily_social_media_hours'].mean():.2f}")
-col3.metric("Avg Sleep Hours", f"{df['sleep_hours'].mean():.2f}")
-col4.metric("Avg Mental Strain", f"{df['mental_strain_score'].mean():.2f}")
-col5.metric("Depression Indicator Rate", f"{df['depression_label'].mean() * 100:.2f}%")
+col1.metric("Total Records", f"{len(filtered_df):,}")
+col2.metric("Avg Social Media Hours", f"{filtered_df['daily_social_media_hours'].mean():.2f}")
+col3.metric("Avg Sleep Hours", f"{filtered_df['sleep_hours'].mean():.2f}")
+col4.metric("Avg Mental Strain", f"{filtered_df['mental_strain_score'].mean():.2f}")
+col5.metric("Depression Indicator Rate", f"{filtered_df['depression_label'].mean() * 100:.2f}%")
 
 st.divider()
 
 ## Summary ##
-usage_group_summary = df.groupby("social_media_usage_group").agg(
+usage_group_summary = filtered_df.groupby("social_media_usage_group").agg(
     records=("social_media_usage_group", "count"),
     avg_social_media_hours=("daily_social_media_hours", "mean"),
     avg_sleep_hours=("sleep_hours", "mean"),
@@ -60,7 +101,7 @@ usage_group_summary = df.groupby("social_media_usage_group").agg(
     avg_mental_strain_score=("mental_strain_score", "mean")
 ).round(2).reset_index()
 
-platform_summary = df.groupby("platform_usage").agg(
+platform_summary = filtered_df.groupby("platform_usage").agg(
     records=("platform_usage", "count"),
     avg_social_media_hours=("daily_social_media_hours", "mean"),
     avg_sleep_hours=("sleep_hours", "mean"),
@@ -68,7 +109,7 @@ platform_summary = df.groupby("platform_usage").agg(
     avg_mental_strain_score=("mental_strain_score", "mean")
 ).round(2).reset_index()
 
-depression_summary = df.groupby("depression_label").agg(
+depression_summary = filtered_df.groupby("depression_label").agg(
     records=("depression_label", "count"),
     avg_social_media_hours=("daily_social_media_hours", "mean"),
     avg_sleep_hours=("sleep_hours", "mean"),
@@ -209,7 +250,11 @@ numeric_cols = [
     "mental_strain_score"
 ]
 
-corr = df[numeric_cols].corr().round(2)
+corr = filtered_df[numeric_cols].corr().round(2)
+
+if filtered_df.empty:
+    st.warning("No data available for the selected filters")
+    st.stop()
 
 fig_corr = px.imshow(
     corr,
